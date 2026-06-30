@@ -2009,17 +2009,20 @@ function sceneAudio(idx){
       if(a3){a3.volume=0.65;a3.currentTime=0;a3.play().catch(()=>{});}
     },6650);
   } else if(idx===6){
-    // restart audMid after apology scene
-    if(aM){aM.currentTime=0;}
-    _playAud(aM,400);
+    if(a1&&!a1.paused)_stopAud(a1,1200);
+    if(a2&&!a2.paused)_stopAud(a2,1200);
+    if(a3&&!a3.paused)_stopAud(a3,1200);
+    if(aM&&!aM.paused)_stopAud(aM,1200);
   } else if(idx===7){
     if(a1&&!a1.paused)_stopAud(a1,1200);
     if(a2&&!a2.paused)_stopAud(a2,1200);
+    if(a3&&!a3.paused)_stopAud(a3,1200);
     if(aM&&!aM.paused)_stopAud(aM,1200);
     if(aF){aF.volume=0;aF.currentTime=0;aF.play().catch(()=>{});_fadeVol(aF,0.85,1400);}
   } else {
     if(a1&&!a1.paused)_stopAud(a1,1200);
     if(a2&&!a2.paused)_stopAud(a2,1200);
+    if(a3&&!a3.paused)_stopAud(a3,1200);
     if(aM&&!aM.paused)_stopAud(aM,1200);
   }
 }
