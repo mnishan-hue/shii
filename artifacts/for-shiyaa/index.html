@@ -939,7 +939,7 @@ function lockKey(d){
     // Play aud1 synchronously here while still in user gesture
     if(lockInput===LOCK_CODE){
       var _a1=document.getElementById('aud1');
-      if(_a1){_a1.volume=0.6;_a1.play().catch(function(){});}
+      if(_a1){_a1.currentTime=0;_a1.volume=0;_a1.play().catch(function(){});_fadeVol(_a1,0.6,1200);}
     }
     setTimeout(()=>{
       if(lockInput===LOCK_CODE){
@@ -1985,7 +1985,10 @@ function sceneAudio(idx){
   if(idx===0){
     if(a2&&!a2.paused)_stopAud(a2,1200);
     if(aM&&!aM.paused)_stopAud(aM,1200);
-    if(a1&&a1.paused)_playAud(a1,0);
+    if(a1){
+      if(a1.paused){a1.currentTime=0;_playAud(a1,0);}
+      else{_fadeVol(a1,0.6,800);}
+    }
   } else if(idx===1){
     _stopAud(a1,1400);
     if(aM&&!aM.paused)_stopAud(aM,1200);
