@@ -1768,6 +1768,91 @@ function enter3Letter(){
 }
 
 // ══════════════════════════════════
+// ══════════════════════════════════
+// PROJECTOR SOUND (Web Audio API)
+// ══════════════════════════════════
+let _projCtx=null,_projMaster=null,_projHum=null,_projNoise=null,_projClickId=0;
+
+function _projStart(){
+  if(_projCtx)return;
+  try{
+    _projCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const ctx=_projCtx;
+    _projMaster=ctx.createGain();
+    _projMaster.gain.setValueAtTime(0,ctx.currentTime);
+    _projMaster.gain.linearRampToValueAtTime(0.35,ctx.currentTime+1.8);
+    _projMaster.connect(ctx.destination);
+
+    // Low mechanical hum
+    _projHum=ctx.createOscillator();
+    _projHum.type='sawtooth';
+    _projHum.frequency.value=48;
+    const humGain=ctx.createGain();humGain.gain.value=0.12;
+    const humFilt=ctx.createBiquadFilter();humFilt.type='lowpass';humFilt.frequency.value=120;
+    _projHum.connect(humFilt);humFilt.connect(humGain);humGain.connect(_projMaster);
+    _projHum.start();
+
+    // Noise texture (mechanical whir)
+    const bufSz=ctx.sampleRate*2;
+    const nBuf=ctx.createBuffer(1,bufSz,ctx.sampleRate);
+    const nd=nBuf.getChannelData(0);
+    for(let i=0;i<bufSz;i++)nd[i]=Math.random()*2-1;
+    _projNoise=ctx.createBufferSource();
+    _projNoise.buffer=nBuf;_projNoise.loop=true;
+    const nFilt=ctx.createBiquadFilter();nFilt.type='bandpass';nFilt.frequency.value=600;nFilt.Q.value=0.4;
+    const nGain=ctx.createGain();nGain.gain.value=0.04;
+    _projNoise.connect(nFilt);nFilt.connect(nGain);nGain.connect(_projMaster);
+    _projNoise.start();
+
+    // Steady frame-click loop (~6 fps rhythm)
+    const cid=++_projClickId;
+    function tick(t){
+      if(!_projCtx||_projClickId!==cid)return;
+      _projClick(t);
+      const next=t+0.165+Math.random()*0.01;
+      _projCtx.suspend&&void 0;
+      setTimeout(()=>tick(_projCtx?_projCtx.currentTime:0),140);
+    }
+    setTimeout(()=>tick(ctx.currentTime),300);
+  }catch(e){}
+}
+
+function _projClick(atTime){
+  if(!_projCtx||!_projMaster)return;
+  try{
+    const ctx=_projCtx;
+    const t=atTime||ctx.currentTime;
+    const cg=ctx.createGain();
+    cg.gain.setValueAtTime(0.55,t);
+    cg.gain.exponentialRampToValueAtTime(0.001,t+0.055);
+    cg.connect(_projMaster);
+    const osc=ctx.createOscillator();
+    osc.type='square';osc.frequency.value=180+Math.random()*40;
+    osc.connect(cg);osc.start(t);osc.stop(t+0.06);
+    // small tick overtone
+    const tg=ctx.createGain();
+    tg.gain.setValueAtTime(0.2,t);
+    tg.gain.exponentialRampToValueAtTime(0.001,t+0.025);
+    tg.connect(_projMaster);
+    const tosc=ctx.createOscillator();
+    tosc.type='sawtooth';tosc.frequency.value=900+Math.random()*200;
+    tosc.connect(tg);tosc.start(t);tosc.stop(t+0.03);
+  }catch(e){}
+}
+
+function _projStop(){
+  if(!_projCtx)return;
+  _projClickId++;
+  try{
+    _projMaster.gain.setValueAtTime(_projMaster.gain.value,_projCtx.currentTime);
+    _projMaster.gain.linearRampToValueAtTime(0,_projCtx.currentTime+1.0);
+    const ctx=_projCtx;
+    _projCtx=null;_projMaster=null;_projHum=null;_projNoise=null;
+    setTimeout(()=>{try{ctx.close();}catch(e){}},1200);
+  }catch(e){_projCtx=null;_projMaster=null;}
+}
+
+// ══════════════════════════════════
 // S4: REEL
 // ══════════════════════════════════
 let r4Idx=0,r4Busy=false,r4Open=false,r4WheelHandler=null,r4TouchY=0,r4Accum=0;
@@ -1780,6 +1865,7 @@ function r4GateH(){
 }
 
 function enter4(){
+  _projStart();
   r4Idx=0;r4Busy=false;r4Open=true;r4Accum=0;
   ['r4hl','r4hr'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;
@@ -1831,6 +1917,7 @@ function enter4(){
 
 function leaveScene4(){
   r4Open=false;
+  _projStop();
   if(r4WheelHandler){window.removeEventListener('wheel',r4WheelHandler);r4WheelHandler=null;}
 }
 
@@ -1978,19 +2065,16 @@ function sceneAudio(idx){
   const a3=document.getElementById('aud3');
   const aF=document.getElementById('audFinal');
   if(_aud3Timer){clearTimeout(_aud3Timer);_aud3Timer=null;}
-  // stop final audio whenever leaving scene 4 or 7
-  if(idx!==4&&idx!==7&&aF&&!aF.paused)_stopAud(aF,1200);
+  // stop final audio whenever leaving scene 7
+  if(idx!==7&&aF&&!aF.paused)_stopAud(aF,1200);
   if(idx===0){
     if(a2&&!a2.paused)_stopAud(a2,1200);
     if(a1&&a1.paused)_playAud(a1,0);
   } else if(idx===1){
     _stopAud(a1,1400);
     if(a2&&a2.paused)_playAud(a2,1200);
-  } else if(idx===2||idx===3){
+  } else if(idx===2||idx===3||idx===4){
     if(a2&&!a2.paused)_stopAud(a2,1400);
-  } else if(idx===4){
-    if(a2&&!a2.paused)_stopAud(a2,1400);
-    if(aF&&aF.paused)_playAud(aF,600);
   } else if(idx===5){
     if(a2&&!a2.paused)_stopAud(a2,1400);
     _aud3Timer=setTimeout(()=>{
