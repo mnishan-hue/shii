@@ -884,6 +884,7 @@ html,body{
 <audio id="aud1" loop src="aud1.mp3" preload="auto"></audio>
 <audio id="aud2" loop src="aud2.mp3" preload="auto"></audio>
 <audio id="aud3" src="aud3.mp3" preload="auto"></audio>
+<audio id="audFinal" src="aud-final.mpeg" preload="auto"></audio>
 
 <!-- ══ LOCK SCREEN ══ -->
 <div id="lockScreen">
@@ -918,7 +919,7 @@ html,body{
 // Unlock audio on first user gesture (required by browser autoplay policy)
 (function(){
   function unlockAudio(){
-    ['aud1','aud2','aud3','bgMusic'].forEach(function(id){
+    ['aud1','aud2','aud3','audFinal','bgMusic'].forEach(function(id){
       var a=document.getElementById(id);
       if(a){var p=a.play();if(p&&p.catch)p.catch(function(){});a.pause();a.currentTime=0;}
     });
@@ -1975,7 +1976,10 @@ function sceneAudio(idx){
   const a1=document.getElementById('aud1');
   const a2=document.getElementById('aud2');
   const a3=document.getElementById('aud3');
+  const aF=document.getElementById('audFinal');
   if(_aud3Timer){clearTimeout(_aud3Timer);_aud3Timer=null;}
+  // stop final audio whenever leaving scene 7
+  if(idx!==7&&aF&&!aF.paused)_stopAud(aF,1200);
   if(idx===0){
     if(a2&&!a2.paused)_stopAud(a2,1200);
     if(a1&&a1.paused)_playAud(a1,0);
@@ -1989,6 +1993,10 @@ function sceneAudio(idx){
     _aud3Timer=setTimeout(()=>{
       if(a3){a3.volume=0.65;a3.currentTime=0;a3.play().catch(()=>{});}
     },6650);
+  } else if(idx===7){
+    if(a1&&!a1.paused)_stopAud(a1,1200);
+    if(a2&&!a2.paused)_stopAud(a2,1200);
+    if(aF){aF.volume=0;aF.currentTime=0;aF.play().catch(()=>{});_fadeVol(aF,0.85,1400);}
   } else {
     if(a1&&!a1.paused)_stopAud(a1,1200);
     if(a2&&!a2.paused)_stopAud(a2,1200);
