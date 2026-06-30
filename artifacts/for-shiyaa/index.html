@@ -885,6 +885,7 @@ html,body{
 <audio id="aud2" loop src="aud2.mp3" preload="auto"></audio>
 <audio id="aud3" src="aud3.mp3" preload="auto"></audio>
 <audio id="audFinal" src="aud-final.mp3" preload="auto"></audio>
+<audio id="audMid" loop src="aud-mid.mp3" preload="auto"></audio>
 
 <!-- ══ LOCK SCREEN ══ -->
 <div id="lockScreen">
@@ -919,7 +920,7 @@ html,body{
 // Unlock audio on first user gesture (required by browser autoplay policy)
 (function(){
   function unlockAudio(){
-    ['aud1','aud2','aud3','audFinal','bgMusic'].forEach(function(id){
+    ['aud1','aud2','aud3','audFinal','audMid','bgMusic'].forEach(function(id){
       var a=document.getElementById(id);
       if(a){var p=a.play();if(p&&p.catch)p.catch(function(){});a.pause();a.currentTime=0;}
     });
@@ -1977,29 +1978,46 @@ function sceneAudio(idx){
   const a2=document.getElementById('aud2');
   const a3=document.getElementById('aud3');
   const aF=document.getElementById('audFinal');
+  const aM=document.getElementById('audMid');
   if(_aud3Timer){clearTimeout(_aud3Timer);_aud3Timer=null;}
   // stop final audio whenever leaving scene 7
   if(idx!==7&&aF&&!aF.paused)_stopAud(aF,1200);
   if(idx===0){
     if(a2&&!a2.paused)_stopAud(a2,1200);
+    if(aM&&!aM.paused)_stopAud(aM,1200);
     if(a1&&a1.paused)_playAud(a1,0);
   } else if(idx===1){
     _stopAud(a1,1400);
+    if(aM&&!aM.paused)_stopAud(aM,1200);
     if(a2&&a2.paused)_playAud(a2,1200);
-  } else if(idx===2||idx===3||idx===4){
+  } else if(idx===2){
     if(a2&&!a2.paused)_stopAud(a2,1400);
+    // start audMid fresh after book scene
+    if(aM){aM.currentTime=0;}
+    _playAud(aM,400);
+  } else if(idx===3||idx===4){
+    if(a2&&!a2.paused)_stopAud(a2,1400);
+    // let audMid keep playing (looped)
+    if(aM&&aM.paused)_playAud(aM,0);
   } else if(idx===5){
     if(a2&&!a2.paused)_stopAud(a2,1400);
+    if(aM&&!aM.paused)_stopAud(aM,1200);
     _aud3Timer=setTimeout(()=>{
       if(a3){a3.volume=0.65;a3.currentTime=0;a3.play().catch(()=>{});}
     },6650);
+  } else if(idx===6){
+    // restart audMid after apology scene
+    if(aM){aM.currentTime=0;}
+    _playAud(aM,400);
   } else if(idx===7){
     if(a1&&!a1.paused)_stopAud(a1,1200);
     if(a2&&!a2.paused)_stopAud(a2,1200);
+    if(aM&&!aM.paused)_stopAud(aM,1200);
     if(aF){aF.volume=0;aF.currentTime=0;aF.play().catch(()=>{});_fadeVol(aF,0.85,1400);}
   } else {
     if(a1&&!a1.paused)_stopAud(a1,1200);
     if(a2&&!a2.paused)_stopAud(a2,1200);
+    if(aM&&!aM.paused)_stopAud(aM,1200);
   }
 }
 
