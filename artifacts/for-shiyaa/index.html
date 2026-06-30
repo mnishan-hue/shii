@@ -1978,16 +1978,19 @@ function sceneAudio(idx){
   const a3=document.getElementById('aud3');
   const aF=document.getElementById('audFinal');
   if(_aud3Timer){clearTimeout(_aud3Timer);_aud3Timer=null;}
-  // stop final audio whenever leaving scene 7
-  if(idx!==7&&aF&&!aF.paused)_stopAud(aF,1200);
+  // stop final audio whenever leaving scene 4 or 7
+  if(idx!==4&&idx!==7&&aF&&!aF.paused)_stopAud(aF,1200);
   if(idx===0){
     if(a2&&!a2.paused)_stopAud(a2,1200);
     if(a1&&a1.paused)_playAud(a1,0);
   } else if(idx===1){
     _stopAud(a1,1400);
     if(a2&&a2.paused)_playAud(a2,1200);
-  } else if(idx===2||idx===3||idx===4){
+  } else if(idx===2||idx===3){
     if(a2&&!a2.paused)_stopAud(a2,1400);
+  } else if(idx===4){
+    if(a2&&!a2.paused)_stopAud(a2,1400);
+    if(aF&&aF.paused)_playAud(aF,600);
   } else if(idx===5){
     if(a2&&!a2.paused)_stopAud(a2,1400);
     _aud3Timer=setTimeout(()=>{
